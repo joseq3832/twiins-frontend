@@ -570,12 +570,15 @@ export class AdvancedFiltersComponent {
       const filterKey = `filter[${filter.field}]${operator?.value || ''}`;
 
       if (['null', 'not_null'].includes(filter.operator)) {
-        params[filterKey] = true;
+        params[filterKey] = 'true';
       } else if (filter.operator === 'in' && typeof filter.value === 'string') {
         // Convertir string separado por comas a array
-        params[filterKey] = filter.value.split(',').map((v) => v.trim());
+        params[filterKey] = filter.value
+          .split(',')
+          .map((v) => v.trim())
+          .join(',');
       } else {
-        params[filterKey] = filter.value;
+        params[filterKey] = Array.isArray(filter.value) ? filter.value.join(',') : filter.value;
       }
     });
 

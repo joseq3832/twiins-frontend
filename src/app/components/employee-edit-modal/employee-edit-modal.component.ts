@@ -10,7 +10,14 @@ import {
 } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AlertCircle, LucideAngularModule, Save, X } from 'lucide-angular';
-import type { Employee, UpdateEmployeeRequest } from '../../models/api.models';
+import type { Employee, ImmediateFamily, UpdateEmployeeRequest } from '../../models/api.models';
+
+interface FamilyFormData {
+  id?: number;
+  family_name: string;
+  relationship: string;
+  date_of_birth: string;
+}
 
 @Component({
   selector: 'app-employee-edit-modal',
@@ -269,8 +276,8 @@ export class EmployeeEditModalComponent implements OnInit, OnChanges {
   @Output() cancel = new EventEmitter<void>();
 
   employeeForm: FormGroup;
-  private originalFamilyMembers: any[] = [];
-  private deletedFamilyMembers: any[] = [];
+  private originalFamilyMembers: ImmediateFamily[] = [];
+  private deletedFamilyMembers: (ImmediateFamily & { _delete: boolean })[] = [];
   private modifiedFamilyMembers: Set<number> = new Set();
 
   constructor(private fb: FormBuilder) {
@@ -282,7 +289,7 @@ export class EmployeeEditModalComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes.employee && this.employee) {
+    if (changes['employee'] && this.employee) {
       this.initializeForm();
     }
   }
@@ -320,15 +327,18 @@ export class EmployeeEditModalComponent implements OnInit, OnChanges {
 
     // Si el familiar tiene un id, significa que existe en la base de datos
     // y necesitamos marcarlo para eliminación
-    if (familyId) {
-      this.deletedFamilyMembers.push({ id: familyId, _delete: true });
+    if (familyId && this.originalFamilyMembers[familyId]) {
+      const originalMember = this.originalFamilyMembers.find((m) => m.id === familyId);
+      if (originalMember) {
+        this.deletedFamilyMembers.push({ ...originalMember, _delete: true });
+      }
     }
 
     // Remover del FormArray
     this.familyArray.removeAt(index);
   }
 
-  private isFamilyMemberModified(familyData: any, originalIndex: number): boolean {
+  private isFamilyMemberModified(familyData: FamilyFormData, originalIndex: number): boolean {
     if (!this.originalFamilyMembers[originalIndex]) {
       return false; // Es un familiar nuevo
     }
@@ -405,10 +415,13 @@ export class EmployeeEditModalComponent implements OnInit, OnChanges {
 
       // Procesar familiares del formulario
       if (formValue.immediate_family) {
-        formValue.immediate_family.forEach((family: any, _index: number) => {
+        formValue.immediate_family.forEach((family: FamilyFormData, _index: number) => {
           // Si es un familiar nuevo (sin id)
           if (!family.id) {
-            const familyData: any = {
+            const familyData: Omit<
+              ImmediateFamily,
+              'id' | 'employee_id' | 'created_at' | 'updated_at'
+            > = {
               family_name: family.family_name,
               relationship: family.relationship,
               date_of_birth: family.date_of_birth,
@@ -420,7 +433,7 @@ export class EmployeeEditModalComponent implements OnInit, OnChanges {
               (orig) => orig.id === family.id
             );
             if (originalIndex !== -1 && this.isFamilyMemberModified(family, originalIndex)) {
-              const familyData: any = {
+              const familyData: Partial<ImmediateFamily> = {
                 id: family.id,
                 family_name: family.family_name,
                 relationship: family.relationship,
@@ -433,7 +446,7 @@ export class EmployeeEditModalComponent implements OnInit, OnChanges {
       }
 
       // Agregar familiares marcados para eliminación
-      familyMembers.push(...this.deletedFamilyMembers);
+      familyMembers.push(...(this.deletedFamilyMembers as ImmediateFamily[]));
 
       const updateData: UpdateEmployeeRequest = {
         name: formValue.name,

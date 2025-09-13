@@ -57,7 +57,11 @@ export class TokenManagerService {
       if (this.refreshTokenCallback) {
         await this.refreshTokenCallback();
         this.tokenRefreshed$.next();
-        this.tabSyncService.notifyTokenRefreshed(null);
+        if (this.currentTokenData) {
+          this.tabSyncService.notifyTokenRefreshed({
+            token: this.currentTokenData.accessToken,
+          });
+        }
       } else {
         this.refreshError$.next('No refresh callback available');
       }

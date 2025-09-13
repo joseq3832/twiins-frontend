@@ -2,10 +2,21 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, fromEvent, Observable } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 
+export interface TokenData {
+  token: string;
+  expiresAt?: number;
+}
+
+export interface UserData {
+  id: string;
+  email?: string;
+  name?: string;
+}
+
 export interface TabSyncMessage {
   type: 'TOKEN_REFRESHED' | 'TOKEN_EXPIRED' | 'LOGOUT' | 'LOGIN';
   timestamp: number;
-  data?: any;
+  data?: TokenData | UserData;
 }
 
 @Injectable({
@@ -26,7 +37,7 @@ export class TabSyncService {
   /**
    * Envía un mensaje a todas las pestañas abiertas
    */
-  sendMessage(type: TabSyncMessage['type'], data?: any): void {
+  sendMessage(type: TabSyncMessage['type'], data?: TokenData | UserData): void {
     const message: TabSyncMessage = {
       type,
       timestamp: Date.now(),
@@ -43,7 +54,7 @@ export class TabSyncService {
   /**
    * Notifica que el token fue renovado
    */
-  notifyTokenRefreshed(tokenData: any): void {
+  notifyTokenRefreshed(tokenData: TokenData): void {
     this.sendMessage('TOKEN_REFRESHED', tokenData);
   }
 
@@ -64,7 +75,7 @@ export class TabSyncService {
   /**
    * Notifica login a otras pestañas
    */
-  notifyLogin(userData: any): void {
+  notifyLogin(userData: UserData): void {
     this.sendMessage('LOGIN', userData);
   }
 

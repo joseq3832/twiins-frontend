@@ -67,7 +67,7 @@ export interface EmployeeQueryParams {
   sort?: string;
   select?: string;
   include?: string;
-  [key: string]: any;
+  [key: string]: string | number | undefined;
 }
 
 export interface PaginatedResponse<T> {
@@ -97,7 +97,7 @@ export interface ApiError {
   errors?: { [key: string]: string[] };
 }
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   message?: string;
   data?: T;
   success?: boolean;

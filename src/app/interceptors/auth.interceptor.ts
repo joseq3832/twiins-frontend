@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: <explanation> */
+/** biome-ignore-all lint/suspicious/noExplicitAny: HTTP interceptor requires any types for Angular compatibility */
 import type {
   HttpErrorResponse,
   HttpEvent,

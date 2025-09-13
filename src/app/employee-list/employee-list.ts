@@ -22,6 +22,7 @@ import type {
   Employee,
   EmployeeQueryParams,
   PaginatedResponse,
+  UpdateEmployeeRequest,
 } from '../models/api.models';
 import { EmployeeService } from '../services/employee.service';
 
@@ -241,7 +242,7 @@ export class EmployeeList implements OnInit {
     this.showEditModal = true;
   }
 
-  onSaveEmployee(updateData: any): void {
+  onSaveEmployee(updateData: UpdateEmployeeRequest): void {
     if (this.employeeToEdit) {
       this.isSubmittingEdit = true;
       this.employeeService.updateEmployee(this.employeeToEdit.id, updateData).subscribe({

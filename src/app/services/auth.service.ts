@@ -142,8 +142,9 @@ export class AuthService {
   /**
    * Cerrar sesión
    */
-  logout(): Observable<any> {
+  logout(): Observable<void> {
     return this.http.post(`${this.config.apiBaseUrl}/auth/logout`, {}).pipe(
+      map(() => void 0),
       tap(() => {
         this.clearTokens();
       }),
