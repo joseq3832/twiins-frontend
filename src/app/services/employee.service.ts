@@ -34,6 +34,7 @@ export class EmployeeService {
     let httpParams = new HttpParams();
 
     if (params) {
+      // Parámetros básicos
       if (params.page) httpParams = httpParams.set('page', params.page.toString());
       if (params.limit) httpParams = httpParams.set('limit', params.limit.toString());
       if (params.search) httpParams = httpParams.set('search', params.search);
@@ -41,9 +42,15 @@ export class EmployeeService {
       if (params.select) httpParams = httpParams.set('select', params.select);
       if (params.include) httpParams = httpParams.set('include', params.include);
 
+      // Filtros avanzados
       Object.keys(params).forEach((key) => {
         if (key.startsWith('filter[') && params[key] !== undefined) {
-          httpParams = httpParams.set(key, params[key]);
+          const value = params[key];
+          if (Array.isArray(value)) {
+            httpParams = httpParams.set(key, value.join(','));
+          } else {
+            httpParams = httpParams.set(key, value.toString());
+          }
         }
       });
     }
@@ -74,9 +81,31 @@ export class EmployeeService {
    * Crear un nuevo empleado
    */
   createEmployee(employee: CreateEmployeeRequest): Observable<Employee> {
-    return this.http.post<ApiResponse<Employee>>(this.baseUrl, employee).pipe(
-      map((response) => response.data!),
-      catchError(this.handleError)
+    console.log('=== EmployeeService.createEmployee CALLED ===');
+    console.log('baseUrl:', this.baseUrl);
+    console.log('employee data to send:', employee);
+    console.log('http client:', this.http);
+
+    const httpCall = this.http.post<ApiResponse<Employee>>(this.baseUrl, employee);
+    console.log('HTTP POST call created:', httpCall);
+
+    return httpCall.pipe(
+      map((response) => {
+        console.log('=== HTTP RESPONSE RECEIVED ===', response);
+        console.log('Response data:', response.data);
+        return response.data!;
+      }),
+      catchError((error) => {
+        console.error('=== HTTP ERROR IN SERVICE ===', error);
+        console.error('Error details:', {
+          message: error.message,
+          status: error.status,
+          statusText: error.statusText,
+          url: error.url,
+          error: error.error,
+        });
+        return this.handleError(error);
+      })
     );
   }
 
@@ -195,10 +224,10 @@ export class EmployeeService {
   }
 
   /**
-   * Crear filtro de contiene
+   * Crear filtro de contiene (case insensitive)
    */
   static createContainsFilter(field: string, value: string): { [key: string]: string } {
-    return { [`filter[${field}][$like]`]: value };
+    return { [`filter[${field}][$ilike]`]: value };
   }
 
   /**
@@ -206,6 +235,51 @@ export class EmployeeService {
    */
   static createInFilter(field: string, values: string[]): { [key: string]: string } {
     return { [`filter[${field}][$in]`]: values.join(',') };
+  }
+
+  /**
+   * Crear filtro de no igual
+   */
+  static createNotEqualFilter(field: string, value: string): { [key: string]: string } {
+    return { [`filter[${field}][$not]`]: value };
+  }
+
+  /**
+   * Crear filtro de es nulo
+   */
+  static createNullFilter(field: string, isNull: boolean = true): { [key: string]: string } {
+    return { [`filter[${field}][$null]`]: isNull.toString() };
+  }
+
+  /**
+   * Crear filtro de entre valores
+   */
+  static createBetweenFilter(field: string, min: string, max: string): { [key: string]: string } {
+    return { [`filter[${field}][$btw]`]: `${min},${max}` };
+  }
+
+  /**
+   * Crear filtro de comienza con
+   */
+  static createStartsWithFilter(field: string, value: string): { [key: string]: string } {
+    return { [`filter[${field}][$sw]`]: value };
+  }
+
+  /**
+   * Crear filtro de contiene (case sensitive)
+   */
+  static createContainsCaseSensitiveFilter(
+    field: string,
+    value: string
+  ): { [key: string]: string } {
+    return { [`filter[${field}][$contains]`]: value };
+  }
+
+  /**
+   * Crear múltiples filtros y combinarlos
+   */
+  static combineFilters(...filters: { [key: string]: string }[]): { [key: string]: string } {
+    return Object.assign({}, ...filters);
   }
 
   /**

@@ -48,7 +48,7 @@ export class AuthService {
         try {
           const user = JSON.parse(storedUser);
           this.currentUserSubject.next(user);
-        } catch (e) {
+        } catch (_e) {
           // Si falla el parse, obtener desde API
         }
       }
@@ -99,7 +99,7 @@ export class AuthService {
         this.storeTokens(response);
         this.isAuthenticatedSubject.next(true);
         this.startAutoRefresh(response);
-        
+
         // Obtener información del usuario desde /me
         this.getCurrentUser().subscribe({
           next: (user) => {
@@ -111,7 +111,7 @@ export class AuthService {
             // Si falla obtener el usuario, limpiar autenticación
             this.isLoggingIn = false;
             this.logout();
-          }
+          },
         });
       }),
       catchError((error) => {

@@ -1,100 +1,352 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import type { Employee, EmployeeQueryParams, Meta, PaginatedResponse } from '../models/api.models';
+import { Edit, Eye, LucideAngularModule, Trash2 } from 'lucide-angular';
+import {
+  AdvancedDataTableComponent,
+  type PageEvent,
+  type SortEvent,
+  type TableAction,
+  type TableColumn,
+} from '../components/advanced-data-table/advanced-data-table.component';
+import {
+  AdvancedFiltersComponent,
+  type FilterField,
+} from '../components/advanced-filters/advanced-filters.component';
+import { EmployeeCreateModalComponent } from '../components/employee-create-modal/employee-create-modal.component';
+import { ConfirmationModalComponent } from '../components/confirmation-modal/confirmation-modal.component';
+import { EmployeeEditModalComponent } from '../components/employee-edit-modal/employee-edit-modal.component';
+import { EmployeeViewModalComponent } from '../components/employee-view-modal/employee-view-modal.component';
+import type {
+  CreateEmployeeRequest,
+  Employee,
+  EmployeeQueryParams,
+  PaginatedResponse,
+} from '../models/api.models';
 import { EmployeeService } from '../services/employee.service';
 
 @Component({
   selector: 'app-employee-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    LucideAngularModule,
+    AdvancedFiltersComponent,
+    AdvancedDataTableComponent,
+    ConfirmationModalComponent,
+    EmployeeEditModalComponent,
+    EmployeeCreateModalComponent,
+    EmployeeViewModalComponent,
+  ],
   templateUrl: './employee-list.html',
-  styleUrls: ['./employee-list.css']
 })
 export class EmployeeList implements OnInit {
-  employees: Employee[] = [];
-  meta: Meta = {
-    current_page: 1,
-    from: 0,
-    last_page: 1,
-    per_page: 10,
-    to: 0,
-    total: 0
-  };
+  readonly Eye = Eye;
+  readonly Edit = Edit;
+  readonly Trash2 = Trash2;
+  data: PaginatedResponse<Employee> | null = null;
   loading = false;
   error: string | null = null;
-  searchTerm = '';
+  currentFilters: EmployeeQueryParams = { page: 1, limit: 20 };
+  currentSort: SortEvent | null = null;
+
+  // Modal state
+  showDeleteModal = false;
+  showViewModal = false;
+  employeeToDelete: Employee | null = null;
+  employeeToView: Employee | null = null;
+  showEditModal = false;
+  employeeToEdit: Employee | null = null;
+  isSubmittingEdit = false;
+  showCreateModal = false;
+  isSubmittingCreate = false;
+
+  // Configuración de filtros
+  filterFields: FilterField[] = [
+    { key: 'name', label: 'Nombre', type: 'text' },
+    { key: 'email', label: 'Email', type: 'text' },
+    { key: 'position', label: 'Cargo', type: 'text' },
+    { key: 'hire_date', label: 'Fecha de Contratación', type: 'date' },
+  ];
+
+  // Relaciones disponibles
+  availableRelations = [
+    { key: 'department', label: 'Departamento' },
+    { key: 'manager', label: 'Supervisor' },
+    { key: 'projects', label: 'Proyectos' },
+  ];
+
+  sortableFields: FilterField[] = [
+    { key: 'name', label: 'Nombre', type: 'text' },
+    { key: 'email', label: 'Email', type: 'text' },
+    { key: 'position', label: 'Cargo', type: 'text' },
+    { key: 'hire_date', label: 'Fecha de Contratación', type: 'date' },
+  ];
+
+  selectableFields: FilterField[] = [
+    { key: 'id', label: 'ID', type: 'number' },
+    { key: 'name', label: 'Nombre', type: 'text' },
+    { key: 'email', label: 'Email', type: 'text' },
+    { key: 'position', label: 'Cargo', type: 'text' },
+    { key: 'hire_date', label: 'Fecha de Contratación', type: 'date' },
+    { key: 'immediate_family', label: 'Familia Inmediata', type: 'text' },
+  ];
+
+  // Configuración de columnas de la tabla
+  tableColumns: TableColumn<Employee>[] = [
+    { key: 'id', label: 'ID', sortable: true, type: 'number', width: '80px' },
+    { key: 'name', label: 'Nombre', sortable: true, type: 'text' },
+    { key: 'email', label: 'Email', sortable: true, type: 'email' },
+    { key: 'position', label: 'Cargo', sortable: true, type: 'text' },
+    {
+      key: 'hire_date',
+      label: 'Fecha de Contratación',
+      sortable: true,
+      type: 'date',
+      formatter: (value: unknown) => {
+        const dateValue = typeof value === 'string' ? value : String(value);
+        return new Date(dateValue).toLocaleDateString('es-ES');
+      },
+    },
+    {
+      key: 'immediate_family',
+      label: 'Familia',
+      sortable: false,
+      type: 'custom',
+      align: 'center',
+      formatter: (value: unknown) => {
+        const familyArray = Array.isArray(value) ? value : [];
+        return familyArray.length > 0 ? `${familyArray.length} miembro(s)` : '0 miembros';
+      },
+    },
+    {
+      key: 'created_at',
+      label: 'Fecha de Creación',
+      sortable: true,
+      type: 'date',
+      formatter: (value: unknown) => {
+        const dateValue = typeof value === 'string' ? value : String(value);
+        return new Date(dateValue).toLocaleDateString('es-ES');
+      },
+    },
+  ];
+
+  visibleColumns: TableColumn<Employee>[] = [];
+
+  // Acciones de la tabla
+  tableActions: TableAction<Employee>[] = [
+    {
+      label: 'Ver',
+      icon: 'eye',
+      class: 'text-blue-600 hover:text-blue-800 mr-2',
+      action: (employee: Employee) => this.viewEmployee(employee),
+    },
+    {
+      label: 'Editar',
+      icon: 'edit',
+      class: 'text-green-600 hover:text-green-800 mr-2',
+      action: (employee: Employee) => this.editEmployee(employee),
+    },
+    {
+      label: 'Eliminar',
+      icon: 'trash-2',
+      class: 'text-red-600 hover:text-red-800',
+      action: (employee: Employee) => this.deleteEmployee(employee),
+    },
+  ];
+
+  getIconComponent(iconName: string): typeof Eye | typeof Edit | typeof Trash2 | null {
+    switch (iconName) {
+      case 'eye':
+        return this.Eye;
+      case 'edit':
+        return this.Edit;
+      case 'trash-2':
+        return this.Trash2;
+      default:
+        return null;
+    }
+  }
 
   constructor(private employeeService: EmployeeService) {}
 
   ngOnInit(): void {
+    this.visibleColumns = [...this.tableColumns];
     this.loadEmployees();
   }
 
-  loadEmployees(page: number = 1): void {
+  loadEmployees(): void {
     this.loading = true;
     this.error = null;
 
     const params: EmployeeQueryParams = {
-      page,
-      limit: this.meta.per_page,
-      include: 'immediate_family'
+      ...this.currentFilters,
+      include: 'immediateFamily',
     };
-
-    if (this.searchTerm.trim()) {
-      params.search = this.searchTerm.trim();
-    }
 
     this.employeeService.getEmployees(params).subscribe({
       next: (response: PaginatedResponse<Employee>) => {
-        this.employees = response.data;
-        this.meta = response.meta;
+        this.data = response;
         this.loading = false;
       },
       error: (error) => {
         this.error = 'Error al cargar los empleados. Por favor, intenta de nuevo.';
         this.loading = false;
         console.error('Error loading employees:', error);
-      }
+      },
     });
   }
 
-  onSearch(): void {
-    this.loadEmployees(1);
+  onFiltersChange(filters: EmployeeQueryParams): void {
+    this.currentFilters = { ...filters, page: 1, limit: this.currentFilters.limit };
+    this.loadEmployees();
   }
 
-  onPageChange(page: number): void {
-    if (page >= 1 && page <= this.meta.last_page) {
-      this.loadEmployees(page);
+  onSortChange(sort: SortEvent): void {
+    this.currentSort = sort;
+    this.currentFilters.sort = sort.direction === 'desc' ? `-${sort.field}` : sort.field;
+    this.loadEmployees();
+  }
+
+  onPageChange(pageEvent: PageEvent): void {
+    this.currentFilters.page = pageEvent.page;
+    this.currentFilters.limit = pageEvent.limit;
+    this.loadEmployees();
+  }
+
+  onPageSizeChange(pageSize: number): void {
+    this.currentFilters.limit = pageSize;
+    this.currentFilters.page = 1;
+    this.loadEmployees();
+  }
+
+  onRetry(): void {
+    this.loadEmployees();
+  }
+
+  // Acciones de empleados
+  viewEmployee(employee: Employee) {
+    console.log('Ver empleado:', employee);
+    this.employeeToView = employee;
+    this.showViewModal = true;
+  }
+
+  closeViewModal() {
+    this.showViewModal = false;
+    this.employeeToView = null;
+  }
+
+  editEmployee(employee: Employee): void {
+    this.employeeToEdit = employee;
+    this.showEditModal = true;
+  }
+
+  onSaveEmployee(updateData: any): void {
+    if (this.employeeToEdit) {
+      this.isSubmittingEdit = true;
+      this.employeeService.updateEmployee(this.employeeToEdit.id, updateData).subscribe({
+        next: () => {
+          this.loadEmployees();
+          this.closeEditModal();
+        },
+        error: (error) => {
+          console.error('Error updating employee:', error);
+          alert('Error al actualizar el empleado. Por favor, intenta de nuevo.');
+          this.isSubmittingEdit = false;
+        },
+      });
     }
   }
 
-  getPaginationPages(): number[] {
-    const pages: number[] = [];
-    const currentPage = this.meta.current_page;
-    const lastPage = this.meta.last_page;
-    
-    // Mostrar máximo 5 páginas
-    let startPage = Math.max(1, currentPage - 2);
-    let endPage = Math.min(lastPage, startPage + 4);
-    
-    // Ajustar si estamos cerca del final
-    if (endPage - startPage < 4) {
-      startPage = Math.max(1, endPage - 4);
-    }
-    
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-    
-    return pages;
+  closeEditModal() {
+    this.showEditModal = false;
+    this.employeeToEdit = null;
+    this.isSubmittingEdit = false;
   }
 
-  formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('es-ES');
+  // Create modal methods
+  openCreateModal() {
+    console.log('Opening create modal');
+    this.showCreateModal = true;
+    console.log('showCreateModal set to:', this.showCreateModal);
   }
 
-  getFamilyCount(employee: Employee): number {
-    return employee.immediate_family?.length || 0;
+  onCreateEmployee(employeeData: Partial<Employee>) {
+    console.log('=== onCreateEmployee CALLED ===');
+    console.log('Received employeeData:', employeeData);
+    console.log('employeeData type:', typeof employeeData);
+    console.log('employeeData keys:', Object.keys(employeeData || {}));
+    console.log('immediate_family in employeeData:', employeeData.immediate_family);
+
+    const createRequest: CreateEmployeeRequest = {
+      name: employeeData.name!,
+      email: employeeData.email!,
+      position: employeeData.position!,
+      hire_date: employeeData.hire_date!,
+      immediate_family: employeeData.immediate_family || [],
+    };
+
+    console.log('Created request object:', createRequest);
+    console.log('immediate_family in request:', createRequest.immediate_family);
+    console.log('About to call employeeService.createEmployee');
+    console.log('employeeService:', this.employeeService);
+
+    this.isSubmittingCreate = true;
+
+    const subscription = this.employeeService.createEmployee(createRequest);
+    console.log('Service call returned:', subscription);
+
+    subscription.subscribe({
+      next: (response) => {
+        console.log('=== SUCCESS: Employee created ===', response);
+        this.isSubmittingCreate = false;
+        this.closeCreateModal();
+        this.loadEmployees();
+      },
+      error: (error) => {
+        console.error('=== ERROR: Creating employee ===', error);
+        console.error('Error details:', {
+          message: error.message,
+          status: error.status,
+          statusText: error.statusText,
+          url: error.url,
+        });
+        this.isSubmittingCreate = false;
+      },
+    });
+
+    console.log('Subscription created, waiting for response...');
+  }
+
+  closeCreateModal() {
+    this.showCreateModal = false;
+    this.isSubmittingCreate = false;
+  }
+
+  deleteEmployee(employee: Employee): void {
+    this.employeeToDelete = employee;
+    this.showDeleteModal = true;
+  }
+
+  onConfirmDelete(): void {
+    if (this.employeeToDelete) {
+      this.employeeService.deleteEmployee(this.employeeToDelete.id).subscribe({
+        next: () => {
+          this.loadEmployees();
+          this.closeDeleteModal();
+        },
+        error: (error) => {
+          console.error('Error deleting employee:', error);
+          alert('Error al eliminar el empleado. Por favor, intenta de nuevo.');
+          this.closeDeleteModal();
+        },
+      });
+    }
+  }
+
+  closeDeleteModal(): void {
+    this.showDeleteModal = false;
+    this.employeeToDelete = null;
   }
 }
