@@ -81,18 +81,10 @@ export class EmployeeService {
    * Crear un nuevo empleado
    */
   createEmployee(employee: CreateEmployeeRequest): Observable<Employee> {
-    console.log('=== EmployeeService.createEmployee CALLED ===');
-    console.log('baseUrl:', this.baseUrl);
-    console.log('employee data to send:', employee);
-    console.log('http client:', this.http);
-
     const httpCall = this.http.post<ApiResponse<Employee>>(this.baseUrl, employee);
-    console.log('HTTP POST call created:', httpCall);
 
     return httpCall.pipe(
       map((response) => {
-        console.log('=== HTTP RESPONSE RECEIVED ===', response);
-        console.log('Response data:', response.data);
         return response.data!;
       }),
       catchError((error) => {

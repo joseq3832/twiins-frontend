@@ -227,7 +227,6 @@ export class EmployeeList implements OnInit {
 
   // Acciones de empleados
   viewEmployee(employee: Employee) {
-    console.log('Ver empleado:', employee);
     this.employeeToView = employee;
     this.showViewModal = true;
   }
@@ -267,18 +266,10 @@ export class EmployeeList implements OnInit {
 
   // Create modal methods
   openCreateModal() {
-    console.log('Opening create modal');
     this.showCreateModal = true;
-    console.log('showCreateModal set to:', this.showCreateModal);
   }
 
   onCreateEmployee(employeeData: Partial<Employee>) {
-    console.log('=== onCreateEmployee CALLED ===');
-    console.log('Received employeeData:', employeeData);
-    console.log('employeeData type:', typeof employeeData);
-    console.log('employeeData keys:', Object.keys(employeeData || {}));
-    console.log('immediate_family in employeeData:', employeeData.immediate_family);
-
     const createRequest: CreateEmployeeRequest = {
       name: employeeData.name!,
       email: employeeData.email!,
@@ -287,25 +278,17 @@ export class EmployeeList implements OnInit {
       immediate_family: employeeData.immediate_family || [],
     };
 
-    console.log('Created request object:', createRequest);
-    console.log('immediate_family in request:', createRequest.immediate_family);
-    console.log('About to call employeeService.createEmployee');
-    console.log('employeeService:', this.employeeService);
-
     this.isSubmittingCreate = true;
 
     const subscription = this.employeeService.createEmployee(createRequest);
-    console.log('Service call returned:', subscription);
 
     subscription.subscribe({
-      next: (response) => {
-        console.log('=== SUCCESS: Employee created ===', response);
+      next: () => {
         this.isSubmittingCreate = false;
         this.closeCreateModal();
         this.loadEmployees();
       },
       error: (error) => {
-        console.error('=== ERROR: Creating employee ===', error);
         console.error('Error details:', {
           message: error.message,
           status: error.status,
@@ -315,8 +298,6 @@ export class EmployeeList implements OnInit {
         this.isSubmittingCreate = false;
       },
     });
-
-    console.log('Subscription created, waiting for response...');
   }
 
   closeCreateModal() {

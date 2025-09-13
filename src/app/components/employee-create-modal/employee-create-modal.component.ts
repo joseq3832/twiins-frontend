@@ -297,12 +297,6 @@ export class EmployeeCreateModalComponent implements OnInit, OnChanges {
   }
 
   onSubmit() {
-    console.log('onSubmit called, form valid:', this.employeeForm.valid);
-    console.log('Form value:', this.employeeForm.value);
-    console.log('Family array length:', this.familyArray.length);
-    console.log('Family array value:', this.familyArray.value);
-    console.log('Immediate family from form:', this.employeeForm.get('immediate_family')?.value);
-
     if (this.employeeForm.valid) {
       const formValue = this.employeeForm.value;
 
@@ -315,13 +309,8 @@ export class EmployeeCreateModalComponent implements OnInit, OnChanges {
         immediate_family: formValue.immediate_family || [],
       };
 
-      console.log('Emitting save event with data:', newEmployeeData);
-      console.log('immediate_family in payload:', newEmployeeData.immediate_family);
-      console.log('Save EventEmitter:', this.save);
       this.save.emit(newEmployeeData);
-      console.log('Save event emitted successfully');
     } else {
-      console.log('Form is invalid, errors:', this.employeeForm.errors);
     }
   }
 
