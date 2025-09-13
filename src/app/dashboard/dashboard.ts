@@ -1,14 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthService } from '../services/auth.service';
 import { User } from '../models/api.models';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-dashboard',
   imports: [CommonModule],
   templateUrl: './dashboard.html',
-  styleUrl: './dashboard.scss'
+  styleUrl: './dashboard.scss',
 })
 export class Dashboard implements OnInit {
   currentUser: User | null = null;
@@ -20,7 +20,7 @@ export class Dashboard implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.authService.currentUser$.subscribe(user => {
+    this.authService.currentUser$.subscribe((user) => {
       this.currentUser = user;
     });
   }
@@ -38,7 +38,7 @@ export class Dashboard implements OnInit {
       },
       complete: () => {
         this.isLoading = false;
-      }
+      },
     });
   }
 }

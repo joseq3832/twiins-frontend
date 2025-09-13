@@ -1,7 +1,7 @@
 import type { Routes } from '@angular/router';
-import { Login } from './login/login';
 import { Dashboard } from './dashboard/dashboard';
 import { AuthGuard } from './guards/auth.guard';
+import { Login } from './login/login';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },

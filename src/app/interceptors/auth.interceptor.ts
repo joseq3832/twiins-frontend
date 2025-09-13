@@ -12,11 +12,14 @@ import { catchError, filter, switchMap, take } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 
 let isRefreshing = false;
-let refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
+const refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
 
-export const authInterceptor: HttpInterceptorFn = (request: HttpRequest<any>, next: HttpHandlerFn): Observable<HttpEvent<any>> => {
+export const authInterceptor: HttpInterceptorFn = (
+  request: HttpRequest<any>,
+  next: HttpHandlerFn
+): Observable<HttpEvent<any>> => {
   const authService = inject(AuthService);
-  
+
   // Agregar token de autorización si está disponible
   const authRequest = addAuthHeader(request, authService);
 
@@ -60,7 +63,11 @@ function isAuthRequest(request: HttpRequest<any>): boolean {
 /**
  * Manejar error 401 (no autorizado)
  */
-function handle401Error(request: HttpRequest<any>, next: HttpHandlerFn, authService: AuthService): Observable<HttpEvent<any>> {
+function handle401Error(
+  request: HttpRequest<any>,
+  next: HttpHandlerFn,
+  authService: AuthService
+): Observable<HttpEvent<any>> {
   if (!isRefreshing) {
     isRefreshing = true;
     refreshTokenSubject.next(null);
