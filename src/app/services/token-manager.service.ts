@@ -1,6 +1,5 @@
 import { Injectable, inject } from '@angular/core';
 import { Subject, Subscription, timer } from 'rxjs';
-import { AuthService } from './auth.service';
 import { TabSyncService } from './tab-sync.service';
 
 export interface TokenData {
@@ -13,8 +12,8 @@ export interface TokenData {
   providedIn: 'root',
 })
 export class TokenManagerService {
-  private authService = inject(AuthService);
   private tabSyncService = inject(TabSyncService);
+  private refreshTokenCallback?: () => Promise<void>;
 
   private refreshTimer?: Subscription;
   private currentTokenData?: TokenData;
@@ -29,8 +28,9 @@ export class TokenManagerService {
     this.setupTabSync();
   }
 
-  startAutoRefresh(tokenData: TokenData): void {
+  startAutoRefresh(tokenData: TokenData, refreshCallback?: () => Promise<void>): void {
     this.currentTokenData = tokenData;
+    this.refreshTokenCallback = refreshCallback;
     this.scheduleRefresh();
   }
 
@@ -54,10 +54,13 @@ export class TokenManagerService {
     this.isRefreshing = true;
 
     try {
-      await this.authService.refreshToken().toPromise();
-
-      this.tokenRefreshed$.next();
-      this.tabSyncService.notifyTokenRefreshed(null);
+      if (this.refreshTokenCallback) {
+        await this.refreshTokenCallback();
+        this.tokenRefreshed$.next();
+        this.tabSyncService.notifyTokenRefreshed(null);
+      } else {
+        this.refreshError$.next('No refresh callback available');
+      }
     } catch (_error) {
       this.refreshError$.next('Error al renovar token');
     } finally {

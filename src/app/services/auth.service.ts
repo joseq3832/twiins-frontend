@@ -51,7 +51,9 @@ export class AuthService {
             expiresIn: parseInt(expiresIn, 10),
           };
 
-          this.tokenManager.startAutoRefresh(tokenData);
+          this.tokenManager.startAutoRefresh(tokenData, async () => {
+          await this.refreshToken().toPromise();
+        });
         },
         error: () => {
           this.logout();
@@ -196,7 +198,9 @@ export class AuthService {
       expiresIn: authResponse.expires_in,
     };
 
-    this.tokenManager.startAutoRefresh(tokenData);
+    this.tokenManager.startAutoRefresh(tokenData, async () => {
+       await this.refreshToken().toPromise();
+     });
   }
 
   /**

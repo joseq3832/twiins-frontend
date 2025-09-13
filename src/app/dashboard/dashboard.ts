@@ -8,7 +8,7 @@ import { AuthService } from '../services/auth.service';
   selector: 'app-dashboard',
   imports: [CommonModule],
   templateUrl: './dashboard.html',
-  styleUrl: './dashboard.scss',
+  styleUrl: './dashboard.css',
 })
 export class Dashboard implements OnInit {
   currentUser: User | null = null;
