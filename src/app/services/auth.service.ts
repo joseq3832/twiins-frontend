@@ -52,8 +52,8 @@ export class AuthService {
           };
 
           this.tokenManager.startAutoRefresh(tokenData, async () => {
-          await this.refreshToken().toPromise();
-        });
+            await this.refreshToken().toPromise();
+          });
         },
         error: () => {
           this.logout();
@@ -199,8 +199,8 @@ export class AuthService {
     };
 
     this.tokenManager.startAutoRefresh(tokenData, async () => {
-       await this.refreshToken().toPromise();
-     });
+      await this.refreshToken().toPromise();
+    });
   }
 
   /**
