@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { LucideAngularModule, AlertTriangle, X } from 'lucide-angular';
+import { AlertTriangle, LucideAngularModule, X } from 'lucide-angular';
 
 @Component({
   selector: 'app-confirmation-modal',

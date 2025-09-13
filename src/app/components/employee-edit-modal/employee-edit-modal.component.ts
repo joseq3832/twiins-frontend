@@ -282,7 +282,7 @@ export class EmployeeEditModalComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['employee'] && this.employee) {
+    if (changes.employee && this.employee) {
       this.initializeForm();
     }
   }
@@ -405,7 +405,7 @@ export class EmployeeEditModalComponent implements OnInit, OnChanges {
 
       // Procesar familiares del formulario
       if (formValue.immediate_family) {
-        formValue.immediate_family.forEach((family: any, index: number) => {
+        formValue.immediate_family.forEach((family: any, _index: number) => {
           // Si es un familiar nuevo (sin id)
           if (!family.id) {
             const familyData: any = {
