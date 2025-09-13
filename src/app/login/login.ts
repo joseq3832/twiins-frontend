@@ -33,14 +33,19 @@ export class Login {
       const loginData: LoginRequest = this.loginForm.value;
 
       this.authService.login(loginData).subscribe({
-        next: (response) => {
-          console.log(response);
-          this.isLoading = false;
-          this.showNotification('¡Inicio de sesión exitoso!', 'success');
-          // Redirigir al dashboard o página principal
-          setTimeout(() => {
-            this.router.navigate(['/dashboard']);
-          }, 1500);
+        next: () => {
+          this.authService.getCurrentUser().subscribe({
+            next: () => {
+              this.isLoading = false;
+              this.showNotification('¡Inicio de sesión exitoso!', 'success');
+              this.router.navigate(['/dashboard']);
+            },
+            error: () => {
+              this.isLoading = false;
+              this.showNotification('¡Inicio de sesión exitoso!', 'success');
+              this.router.navigate(['/dashboard']);
+            },
+          });
         },
         error: (error) => {
           this.isLoading = false;

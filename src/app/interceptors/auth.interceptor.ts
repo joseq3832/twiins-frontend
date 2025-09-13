@@ -20,12 +20,10 @@ export const authInterceptor: HttpInterceptorFn = (
 ): Observable<HttpEvent<any>> => {
   const authService = inject(AuthService);
 
-  // Agregar token de autorización si está disponible
   const authRequest = addAuthHeader(request, authService);
 
   return next(authRequest).pipe(
     catchError((error: HttpErrorResponse) => {
-      // Si es un error 401 y no es una petición de login/register/refresh
       if (error.status === 401 && !isAuthRequest(request)) {
         return handle401Error(authRequest, next, authService);
       }
@@ -80,24 +78,20 @@ function handle401Error(
           isRefreshing = false;
           refreshTokenSubject.next(tokenResponse.access_token);
 
-          // Reintentar la petición original con el nuevo token
           const newAuthRequest = addAuthHeader(request, authService);
           return next(newAuthRequest);
         }),
         catchError((error) => {
           isRefreshing = false;
-          // Si falla el refresh, hacer logout
           authService.logout().subscribe();
           return throwError(() => error);
         })
       );
     } else {
-      // No hay refresh token, hacer logout
       authService.logout().subscribe();
       return throwError(() => new Error('No refresh token available'));
     }
   } else {
-    // Si ya se está refrescando el token, esperar a que termine
     return refreshTokenSubject.pipe(
       filter((token) => token !== null),
       take(1),

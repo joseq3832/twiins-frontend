@@ -34,7 +34,6 @@ export class EmployeeService {
     let httpParams = new HttpParams();
 
     if (params) {
-      // Parámetros básicos
       if (params.page) httpParams = httpParams.set('page', params.page.toString());
       if (params.limit) httpParams = httpParams.set('limit', params.limit.toString());
       if (params.search) httpParams = httpParams.set('search', params.search);
@@ -42,7 +41,6 @@ export class EmployeeService {
       if (params.select) httpParams = httpParams.set('select', params.select);
       if (params.include) httpParams = httpParams.set('include', params.include);
 
-      // Filtros dinámicos (filter[campo][operador])
       Object.keys(params).forEach((key) => {
         if (key.startsWith('filter[') && params[key] !== undefined) {
           httpParams = httpParams.set(key, params[key]);
@@ -217,15 +215,12 @@ export class EmployeeService {
     let errorMessage = 'Ha ocurrido un error inesperado';
 
     if (error.error instanceof ErrorEvent) {
-      // Error del lado del cliente
       errorMessage = error.error.message;
     } else {
-      // Error del lado del servidor
       const apiError = error.error as ApiError;
       errorMessage = apiError.message || `Error ${error.status}: ${error.statusText}`;
     }
 
-    console.error('Error en EmployeeService:', error);
     return throwError(() => new Error(errorMessage));
   };
 }

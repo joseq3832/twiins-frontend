@@ -1,4 +1,3 @@
-// Modelos de autenticación
 export interface LoginRequest {
   email: string;
   password: string;
@@ -24,7 +23,6 @@ export interface RefreshTokenRequest {
   refresh_token: string;
 }
 
-// Modelo de usuario
 export interface User {
   id: number;
   name: string;
@@ -34,7 +32,6 @@ export interface User {
   updated_at: string;
 }
 
-// Modelos de empleados
 export interface Employee {
   id: number;
   name: string;
@@ -82,7 +79,6 @@ export interface CreateEmployeeRequest {
 
 export interface UpdateEmployeeRequest extends Partial<CreateEmployeeRequest> {}
 
-// Parámetros de consulta para empleados
 export interface EmployeeQueryParams {
   page?: number;
   limit?: number;
@@ -90,10 +86,9 @@ export interface EmployeeQueryParams {
   sort?: string;
   select?: string;
   include?: string;
-  [key: string]: any; // Para filtros dinámicos como filter[position][$eq]
+  [key: string]: any;
 }
 
-// Respuesta paginada
 export interface PaginatedResponse<T> {
   data: T[];
   meta: {
@@ -112,13 +107,11 @@ export interface PaginatedResponse<T> {
   };
 }
 
-// Respuestas de error
 export interface ApiError {
   message: string;
   errors?: { [key: string]: string[] };
 }
 
-// Respuesta genérica de la API
 export interface ApiResponse<T = any> {
   message?: string;
   data?: T;

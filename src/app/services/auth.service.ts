@@ -1,5 +1,5 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import {
@@ -7,10 +7,10 @@ import {
   AuthResponse,
   LoginRequest,
   RefreshTokenRequest,
-  RegisterRequest,
   User,
 } from '../models/api.models';
 import { ConfigService } from './config.service';
+import { TokenData, TokenManagerService } from './token-manager.service';
 
 @Injectable({
   providedIn: 'root',
@@ -22,22 +22,36 @@ export class AuthService {
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
   public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
 
+  private tokenManager = inject(TokenManagerService);
+
   constructor(
     private http: HttpClient,
     private config: ConfigService
   ) {
-    // Verificar si hay un token guardado al inicializar
     this.checkStoredAuth();
+
+    this.setupTokenManagerSubscriptions();
   }
 
   private checkStoredAuth(): void {
     const token = this.getAccessToken();
-    if (token) {
+    const refreshToken = this.getRefreshToken();
+    const expiresIn = localStorage.getItem('expires_in');
+
+    if (token && refreshToken && expiresIn) {
       this.isAuthenticatedSubject.next(true);
-      // Opcionalmente, verificar el token con el servidor
+
       this.getCurrentUser().subscribe({
         next: (user) => {
           this.currentUserSubject.next(user);
+
+          const tokenData: TokenData = {
+            accessToken: token,
+            refreshToken: refreshToken,
+            expiresIn: parseInt(expiresIn, 10),
+          };
+
+          this.tokenManager.startAutoRefresh(tokenData);
         },
         error: () => {
           this.logout();
@@ -55,20 +69,8 @@ export class AuthService {
         this.storeTokens(response);
         this.currentUserSubject.next(response.user);
         this.isAuthenticatedSubject.next(true);
-      }),
-      catchError(this.handleError)
-    );
-  }
 
-  /**
-   * Registrar nuevo usuario
-   */
-  register(userData: RegisterRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.config.apiBaseUrl}/auth/register`, userData).pipe(
-      tap((response) => {
-        this.storeTokens(response);
-        this.currentUserSubject.next(response.user);
-        this.isAuthenticatedSubject.next(true);
+        this.startAutoRefresh(response);
       }),
       catchError(this.handleError)
     );
@@ -101,7 +103,6 @@ export class AuthService {
         this.clearTokens();
       }),
       catchError((error) => {
-        // Incluso si falla la petición al servidor, limpiamos los tokens localmente
         this.clearTokens();
         return throwError(() => error);
       })
@@ -160,6 +161,8 @@ export class AuthService {
    * Limpiar tokens del localStorage
    */
   private clearTokens(): void {
+    this.tokenManager.cleanup();
+
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('token_type');
@@ -169,22 +172,47 @@ export class AuthService {
   }
 
   /**
+   * Configurar suscripciones al TokenManager
+   */
+  private setupTokenManagerSubscriptions(): void {
+    this.tokenManager.tokenRefreshed$.subscribe(() => {
+      this.isAuthenticatedSubject.next(true);
+    });
+
+    this.tokenManager.refreshError$.subscribe((error) => {
+      if (error) {
+        this.clearTokens();
+      }
+    });
+  }
+
+  /**
+   * Iniciar renovación automática de tokens
+   */
+  private startAutoRefresh(authResponse: AuthResponse): void {
+    const tokenData: TokenData = {
+      accessToken: authResponse.access_token,
+      refreshToken: authResponse.refresh_token,
+      expiresIn: authResponse.expires_in,
+    };
+
+    this.tokenManager.startAutoRefresh(tokenData);
+  }
+
+  /**
    * Manejar errores de HTTP
    */
   private handleError = (error: HttpErrorResponse): Observable<never> => {
     let errorMessage = 'Ha ocurrido un error inesperado';
 
     if (error.error instanceof ErrorEvent) {
-      // Error del lado del cliente
       errorMessage = error.error.message;
     } else {
-      // Error del lado del servidor
       const apiError = error.error as ApiError;
       errorMessage = apiError.message || `Error ${error.status}: ${error.statusText}`;
     }
 
     if (error.status === 401) {
-      // Token expirado o inválido
       this.clearTokens();
     }
 

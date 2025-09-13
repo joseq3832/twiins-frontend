@@ -1,7 +1,5 @@
-// Basic Angular Material styles
 @import '@angular/material/prebuilt-themes/indigo-pink.css';
 
-// Custom overrides to work better with Tailwind
 .mat-mdc-form-field {
   .mat-mdc-text-field-wrapper {
     @apply rounded-lg;

@@ -31,9 +31,7 @@ export class Dashboard implements OnInit {
       next: () => {
         this.router.navigate(['/login']);
       },
-      error: (error) => {
-        console.error('Error al cerrar sesión:', error);
-        // Incluso si hay error, redirigir al login
+      error: () => {
         this.router.navigate(['/login']);
       },
       complete: () => {
