@@ -124,7 +124,7 @@ export interface PageEvent {
       <!-- Data Table -->
       @if (!loading && !error && data?.data && (data?.data?.length ?? 0) > 0) {
         <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
+          <table class="w-full table-auto divide-y divide-gray-200">
             <!-- Table Head -->
             <thead class="bg-gray-50">
               <tr>
