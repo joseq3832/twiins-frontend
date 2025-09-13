@@ -1,0 +1,109 @@
+<div class="employee-list-container">
+  <div class="header">
+    <h1 class="title">Lista de Empleados</h1>
+    
+    <!-- Barra de búsqueda -->
+    <div class="search-container">
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm" 
+        (keyup.enter)="onSearch()"
+        placeholder="Buscar empleados..."
+        class="search-input"
+      >
+      <button 
+        (click)="onSearch()" 
+        class="search-button"
+        [disabled]="loading"
+      >
+        Buscar
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading spinner -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Cargando empleados...</p>
+  </div>
+
+  <!-- Error message -->
+  <div *ngIf="error" class="error">
+    <p>{{ error }}</p>
+    <button (click)="loadEmployees()" class="retry-button">Reintentar</button>
+  </div>
+
+  <!-- Employee table -->
+  <div *ngIf="!loading && !error" class="table-container">
+    <table class="employee-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Posición</th>
+          <th>Fecha de Contratación</th>
+          <th>Familia Inmediata</th>
+          <th>Fecha de Creación</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let employee of employees" class="employee-row">
+          <td>{{ employee.id }}</td>
+          <td class="employee-name">{{ employee.name }}</td>
+          <td>{{ employee.email }}</td>
+          <td>{{ employee.position }}</td>
+          <td>{{ formatDate(employee.hire_date) }}</td>
+          <td class="family-count">
+            <span class="badge">{{ getFamilyCount(employee) }}</span>
+          </td>
+          <td>{{ formatDate(employee.created_at) }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Empty state -->
+    <div *ngIf="employees.length === 0" class="empty-state">
+      <p>No se encontraron empleados.</p>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="!loading && !error && meta.total > 0" class="pagination-container">
+    <div class="pagination-info">
+      <p>
+        Mostrando {{ meta.from }} - {{ meta.to }} de {{ meta.total }} empleados
+      </p>
+    </div>
+    
+    <div class="pagination">
+      <!-- Previous button -->
+      <button 
+        (click)="onPageChange(meta.current_page - 1)"
+        [disabled]="meta.current_page === 1"
+        class="pagination-button"
+      >
+        ← Anterior
+      </button>
+      
+      <!-- Page numbers -->
+      <button 
+        *ngFor="let page of getPaginationPages()"
+        (click)="onPageChange(page)"
+        [class.active]="page === meta.current_page"
+        class="pagination-button page-number"
+      >
+        {{ page }}
+      </button>
+      
+      <!-- Next button -->
+      <button 
+        (click)="onPageChange(meta.current_page + 1)"
+        [disabled]="meta.current_page === meta.last_page"
+        class="pagination-button"
+      >
+        Siguiente →
+      </button>
+    </div>
+  </div>
+</div>

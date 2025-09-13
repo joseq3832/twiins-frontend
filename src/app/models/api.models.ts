@@ -11,8 +11,6 @@ export interface RegisterRequest {
 }
 
 export interface AuthResponse {
-  message: string;
-  user: User;
   access_token: string;
   refresh_token: string;
   token_type: string;
@@ -27,7 +25,6 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  email_verified_at?: string;
   created_at: string;
   updated_at: string;
 }
@@ -38,26 +35,17 @@ export interface Employee {
   email: string;
   position: string;
   hire_date: string;
-  salary: number;
-  department: string;
-  phone?: string;
-  address?: string;
-  birth_date?: string;
-  emergency_contact?: string;
-  emergency_phone?: string;
-  status: 'active' | 'inactive';
+  immediate_family?: ImmediateFamily[];
   created_at: string;
   updated_at: string;
-  immediate_family?: ImmediateFamily[];
 }
 
 export interface ImmediateFamily {
   id: number;
   employee_id: number;
-  name: string;
+  family_name: string;
   relationship: string;
-  birth_date?: string;
-  phone?: string;
+  date_of_birth: string;
   created_at: string;
   updated_at: string;
 }
@@ -67,14 +55,7 @@ export interface CreateEmployeeRequest {
   email: string;
   position: string;
   hire_date: string;
-  salary: number;
-  department: string;
-  phone?: string;
-  address?: string;
-  birth_date?: string;
-  emergency_contact?: string;
-  emergency_phone?: string;
-  status?: 'active' | 'inactive';
+  immediate_family?: ImmediateFamily[];
 }
 
 export interface UpdateEmployeeRequest extends Partial<CreateEmployeeRequest> {}
@@ -91,20 +72,24 @@ export interface EmployeeQueryParams {
 
 export interface PaginatedResponse<T> {
   data: T[];
-  meta: {
-    current_page: number;
-    from: number;
-    last_page: number;
-    per_page: number;
-    to: number;
-    total: number;
-  };
-  links: {
-    first: string;
-    last: string;
-    prev?: string;
-    next?: string;
-  };
+  meta: Meta;
+  links: Links;
+}
+
+export interface Meta {
+  current_page: number;
+  from: number;
+  last_page: number;
+  per_page: number;
+  to: number;
+  total: number;
+}
+
+export interface Links {
+  first: string;
+  last: string;
+  prev: string;
+  next: string;
 }
 
 export interface ApiError {

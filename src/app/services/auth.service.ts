@@ -22,6 +22,7 @@ export class AuthService {
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
   public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
 
+  private isLoggingIn = false;
   private tokenManager = inject(TokenManagerService);
 
   constructor(
@@ -37,28 +38,54 @@ export class AuthService {
     const token = this.getAccessToken();
     const refreshToken = this.getRefreshToken();
     const expiresIn = localStorage.getItem('expires_in');
+    const storedUser = localStorage.getItem('current_user');
 
     if (token && refreshToken && expiresIn) {
       this.isAuthenticatedSubject.next(true);
 
-      this.getCurrentUser().subscribe({
-        next: (user) => {
+      // Si hay usuario almacenado, usarlo primero
+      if (storedUser) {
+        try {
+          const user = JSON.parse(storedUser);
           this.currentUserSubject.next(user);
+        } catch (e) {
+          // Si falla el parse, obtener desde API
+        }
+      }
 
-          const tokenData: TokenData = {
-            accessToken: token,
-            refreshToken: refreshToken,
-            expiresIn: parseInt(expiresIn, 10),
-          };
+      // Solo hacer petición a /me si no estamos en proceso de login
+      if (!this.isLoggingIn) {
+        this.getCurrentUser().subscribe({
+          next: (user) => {
+            this.currentUserSubject.next(user);
+            localStorage.setItem('current_user', JSON.stringify(user));
 
-          this.tokenManager.startAutoRefresh(tokenData, async () => {
-            await this.refreshToken().toPromise();
-          });
-        },
-        error: () => {
-          this.logout();
-        },
-      });
+            const tokenData: TokenData = {
+              accessToken: token,
+              refreshToken: refreshToken,
+              expiresIn: parseInt(expiresIn, 10),
+            };
+
+            this.tokenManager.startAutoRefresh(tokenData, async () => {
+              await this.refreshToken().toPromise();
+            });
+          },
+          error: () => {
+            this.logout();
+          },
+        });
+      } else {
+        // Si estamos en login, solo configurar auto-refresh
+        const tokenData: TokenData = {
+          accessToken: token,
+          refreshToken: refreshToken,
+          expiresIn: parseInt(expiresIn, 10),
+        };
+
+        this.tokenManager.startAutoRefresh(tokenData, async () => {
+          await this.refreshToken().toPromise();
+        });
+      }
     }
   }
 
@@ -66,15 +93,31 @@ export class AuthService {
    * Iniciar sesión
    */
   login(credentials: LoginRequest): Observable<AuthResponse> {
+    this.isLoggingIn = true;
     return this.http.post<AuthResponse>(`${this.config.apiBaseUrl}/auth/login`, credentials).pipe(
       tap((response) => {
         this.storeTokens(response);
-        this.currentUserSubject.next(response.user);
         this.isAuthenticatedSubject.next(true);
-
         this.startAutoRefresh(response);
+        
+        // Obtener información del usuario desde /me
+        this.getCurrentUser().subscribe({
+          next: (user) => {
+            this.currentUserSubject.next(user);
+            localStorage.setItem('current_user', JSON.stringify(user));
+            this.isLoggingIn = false;
+          },
+          error: () => {
+            // Si falla obtener el usuario, limpiar autenticación
+            this.isLoggingIn = false;
+            this.logout();
+          }
+        });
       }),
-      catchError(this.handleError)
+      catchError((error) => {
+        this.isLoggingIn = false;
+        return this.handleError(error);
+      })
     );
   }
 
@@ -169,6 +212,7 @@ export class AuthService {
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('token_type');
     localStorage.removeItem('expires_in');
+    localStorage.removeItem('current_user');
     this.currentUserSubject.next(null);
     this.isAuthenticatedSubject.next(false);
   }
