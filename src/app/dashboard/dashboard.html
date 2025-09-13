@@ -1,0 +1,125 @@
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+  <!-- Header -->
+  <header class="bg-white shadow-lg border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center py-6">
+        <div class="flex items-center">
+          <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
+        </div>
+        <div class="flex items-center space-x-4">
+          <div class="text-sm text-gray-600">
+            Bienvenido, <span class="font-semibold text-gray-900">{{ currentUser?.name || 'Usuario' }}</span>
+          </div>
+          <button
+            (click)="logout()"
+            [disabled]="isLoading"
+            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          >
+            <svg *ngIf="isLoading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <svg *ngIf="!isLoading" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+            </svg>
+            {{ isLoading ? 'Cerrando...' : 'Cerrar Sesión' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div class="px-4 py-6 sm:px-0">
+      <!-- Welcome Card -->
+      <div class="bg-white overflow-hidden shadow-xl rounded-lg mb-6">
+        <div class="px-6 py-8">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <div class="h-16 w-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                <svg class="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="ml-6">
+              <h2 class="text-2xl font-bold text-gray-900">¡Bienvenido de vuelta!</h2>
+              <p class="text-gray-600 mt-1">Has iniciado sesión exitosamente en el sistema.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Info Card -->
+      <div class="bg-white overflow-hidden shadow-xl rounded-lg mb-6" *ngIf="currentUser">
+        <div class="px-6 py-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Información del Usuario</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <label class="block text-sm font-medium text-gray-700">Nombre</label>
+              <p class="mt-1 text-sm text-gray-900">{{ currentUser.name }}</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <label class="block text-sm font-medium text-gray-700">Email</label>
+              <p class="mt-1 text-sm text-gray-900">{{ currentUser.email }}</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <label class="block text-sm font-medium text-gray-700">ID de Usuario</label>
+              <p class="mt-1 text-sm text-gray-900">{{ currentUser.id }}</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <label class="block text-sm font-medium text-gray-700">Fecha de Registro</label>
+              <p class="mt-1 text-sm text-gray-900">{{ currentUser.created_at | date:'medium' }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="bg-white overflow-hidden shadow-xl rounded-lg">
+        <div class="px-6 py-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Acciones Rápidas</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <button class="bg-blue-50 hover:bg-blue-100 p-6 rounded-lg border border-blue-200 transition-colors duration-200">
+              <div class="flex items-center">
+                <svg class="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                </svg>
+                <div class="ml-4">
+                  <h4 class="text-sm font-medium text-gray-900">Gestionar Empleados</h4>
+                  <p class="text-sm text-gray-500">Ver y administrar empleados</p>
+                </div>
+              </div>
+            </button>
+            
+            <button class="bg-green-50 hover:bg-green-100 p-6 rounded-lg border border-green-200 transition-colors duration-200">
+              <div class="flex items-center">
+                <svg class="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                <div class="ml-4">
+                  <h4 class="text-sm font-medium text-gray-900">Reportes</h4>
+                  <p class="text-sm text-gray-500">Ver estadísticas y reportes</p>
+                </div>
+              </div>
+            </button>
+            
+            <button class="bg-purple-50 hover:bg-purple-100 p-6 rounded-lg border border-purple-200 transition-colors duration-200">
+              <div class="flex items-center">
+                <svg class="h-8 w-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                <div class="ml-4">
+                  <h4 class="text-sm font-medium text-gray-900">Configuración</h4>
+                  <p class="text-sm text-gray-500">Ajustes del sistema</p>
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
